@@ -1,4 +1,4 @@
-# CoE198
+# CoE198 UCL4
 
 Implementing a Hybrid Solar-Grid System in the Philippines
 
