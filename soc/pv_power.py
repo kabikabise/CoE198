@@ -22,6 +22,8 @@ fudge = 20
 pv_list = []
 pv_pred_list = []
 pv_act_list = []
+pv_pred_list_trunc = []
+pv_act_list_trunc = []
 
 df1 = pd.read_csv("current_30m.csv", header=0, names=['current'], dtype="float")
 df2 = pd.read_csv("voltage_30m.csv", header=0, names=['voltage'], dtype="float")
@@ -37,7 +39,7 @@ with open("pv_prediction_30m.csv", "w") as fs:
     pv_list.append(pv_power)
     print(pv_power)
     for x in range(df4.shape[0]):
-        alpha = temp_c * (abs(df5['step'].iloc[x] - 25))
+        alpha = temp_c * (abs(df5['step'].iloc[x]+fudge  - 25))
         pv_power = rated_cap * (df4['step'].iloc[x]/dhi_stc) * (1 + alpha)
         pv_power = abs(pv_power)
         pv_list = []
@@ -55,7 +57,7 @@ with open("pv_actual_30m.csv", "w") as fs:
     pv_list.append(pv_power)
     print(pv_power)
     for x in range(df4.shape[0]):
-        alpha = temp_c * (abs(df5['value'].iloc[x] - 25))
+        alpha = temp_c * (abs(df5['value'].iloc[x]+fudge  - 25))
         pv_power = rated_cap * (df4['value'].iloc[x]/dhi_stc) * (1 + alpha)
         pv_power = abs(pv_power)
         pv_list = []
@@ -66,25 +68,22 @@ with open("pv_actual_30m.csv", "w") as fs:
 
 
 #truncate
-#pv_pred_list = pv_pred_list[5000:8500]
-#pv_act_list = pv_act_list[5000:8500]
+pv_pred_list_trunc = pv_pred_list[6000:6500]
+pv_act_list_trunc = pv_act_list[6000:6500]
+q75, q25 = np.percentile(pv_pred_list_trunc, [75,25])
+iqr = q75-q25
 
-
-#rmse = sqrt(mean_squared_error(pv_act_list, pv_pred_list))
-rmse = rmse(np.array(pv_act_list), np.array(pv_pred_list))
+rmse = rmse(np.array(pv_act_list_trunc), np.array(pv_pred_list_trunc))
 print("rmse: " + str(rmse))
-#nrmse = rmse / (max(pv_pred_list)-min(pv_pred_list))
-nrmse = rmse / statistics.mean(pv_pred_list)
+nrmse = rmse / iqr
 print("nrmse: " + str(nrmse))
 plt.plot(df4.index,pv_pred_list, label='predicted')
 plt.plot(df4.index,pv_act_list, label='actual')
-#plt.plot(range(0,3500),pv_pred_list, label='predicted')
-#plt.plot(range(0,3500),pv_act_list, label='actual')
 
 plt.legend(loc=3, bbox_to_anchor=(1,0))
-plt.xlim([3000,3200])
+plt.xlim([6000,6200])
 plt.ylim([0, 4000])
 plt.ylabel("PV Power (W)")
 plt.xlabel("Time(hr)")
-#plt.show()
 plt.savefig('pv_power.png', bbox_inches="tight")
+plt.show()
